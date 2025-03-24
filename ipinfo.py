@@ -72,6 +72,9 @@ def is_port_open(host, port):
 	try:
 		s.connect((host, port))
 		s.settimeout(0.2)
+	except KeyboardInterrupt:
+		print("\nProgram interrupted by user. Exiting...")
+		exit(0)
 	except:
 		return False
 	else:
