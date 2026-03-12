@@ -1,7 +1,20 @@
+# Sankofa Security Tool
+import pyfiglet
 import requests
 import json
 import time
 import sys
+
+
+# ========================
+# ASCII art
+message = "SANKOFA"
+ascii_art = pyfiglet.figlet_format(message, font="cyberlarge")
+print("=======================================================\n")
+print(ascii_art)
+print("=======================================================\n")
+# ========================
+
 
 # ========================
 # domain argument ("python3 script.py example.com") or enter when prompted
@@ -10,6 +23,12 @@ if len(sys.argv) > 1:
 else:
     TARGET_DOMAIN = input("What domain would you like to find? ")
 # ========================
+
+# ========================
+# year argument
+year_input = int(input("Certs after what year? "))
+# ========================
+
 
 def fetch_certificates(domain: str, retries: int = 5) -> list[dict]:
 # fetch certifications for given domain
@@ -44,7 +63,7 @@ def fetch_certificates(domain: str, retries: int = 5) -> list[dict]:
                 raise
 
 def parse_certificates(certs: list[dict]) -> list[dict]:
-#    parse, filter to post-2024, and "deduplicate" (just remove repeats) by common_name + year
+# parse, filter by year, and "deduplicate" (just remove repeats) by common_name + year
     parsed = []
     seen = set()
 
@@ -52,13 +71,12 @@ def parse_certificates(certs: list[dict]) -> list[dict]:
         not_before = cert.get("not_before", "")
         common_name = cert.get("common_name", "")
 
-        # Filter: only include certs from 2025 onwards
         try:
             year = int(not_before[:4])
         except (ValueError, TypeError):
             continue
 
-        if year <= 2024:
+        if year <= year_input:
             continue
 
         # remove repeats: skip if we've already seen this common_name + year combo
@@ -93,9 +111,10 @@ def main():
         print(json.dumps(cert, indent=2))
         print("-" * 50)
 
-    with open(f"{TARGET_DOMAIN}_certs.json", "w") as f:
+    with open(f"{TARGET_DOMAIN}_{str(year_input)}_certs.json", "w") as f:
         json.dump(parsed_certs, f, indent=2)
-    print(f"\nResults saved to {TARGET_DOMAIN}_certs.json")
+    print(f"\nResults saved to {TARGET_DOMAIN}_{str(year_input)}_certs.json")
 
 if __name__ == "__main__":
     main()
+    
